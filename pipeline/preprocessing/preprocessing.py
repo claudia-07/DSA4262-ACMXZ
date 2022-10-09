@@ -52,11 +52,11 @@ class Preprocessing:
         return self.df
     
     def feature_eng(self):
-        self.df = pd.DataFrame(self.df.groupby(['transcript', 'position', 'nucleotides', 'label'], as_index=False)
+        self.df = pd.DataFrame(self.df.groupby(['gene_id', 'transcript', 'position', 'nucleotides', 'label'], as_index=False)
                             .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
                                     'std': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
                                     'mean': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
-        self.df.columns = ['transcript', 'position', 'nucleotides', 'label',
+        self.df.columns = ['gene_id', 'transcript', 'position', 'nucleotides', 'label',
                             'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean', 
                             'std_25', 'std_50', 'std_75', 'std_mean', 
                             'mean_25', 'mean_50', 'mean_75', 'mean_mean']
