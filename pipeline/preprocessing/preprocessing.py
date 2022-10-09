@@ -5,6 +5,7 @@ from parameters import (model_features_list, key_columns, non_nan_cols, stratify
                         train_percent, validation_percent, test_percent, seed, id_col, 
                         target_encode_cols, numeric_cols, target_col,
                         undersampling_strategy, oversampling_strategy)
+from utilities import get_percent
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -49,7 +50,14 @@ class Preprocessing:
         self.df[non_nan_cols] = self.df[non_nan_cols].fillna(0)
         self.df = self.df.dropna(subset=key_columns)
         return self.df
-
+    
+    def feature_eng(self):
+        self.df = pd.DataFrame(self.df.groupby(['transcript', 'position', 'nucleotides'])
+                            .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
+                                    'std': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
+                                    'mean': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
+        self.df.columns = ['transcript', 'position', 'nucleotides', 'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean', 'std_25', 'std_50', 'std_75', 'std_mean', 'mean_25', 'mean_50', 'mean_75', 'mean_mean']
+    
     def split_stratified_into_train_val_test(self, random_state=None):
         '''Function to split the data into train,test and validation datasets. 
 
