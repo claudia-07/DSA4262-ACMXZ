@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # features - model
-model_features_list = ['transcript', 'position', 'nucleotides', 'dwelling_time', 'std', 'mean', 'label']
+model_features_list = ['transcript', 'position', 'nucleotides', 'gene_id','dwelling_time', 'std', 'mean', 'label']
 
 # features - preprocessing
 key_columns = ['label'] # columns that cannot be null
