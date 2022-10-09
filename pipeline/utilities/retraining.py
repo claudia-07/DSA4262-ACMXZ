@@ -21,5 +21,11 @@ def get_first_transaction(df_all, list_members, with_id = False):
         df_first_tx.drop(columns=['first_purchase_date', 'transaction_date', 'membership_card_id'], inplace=True)
         return (df_first_tx)
 
+def get_percent(n):
+    def percentile_(x):
+        return np.percentile(x, n)
+    percentile_.__name__ = 'percentile_%s' % n
+    return percentile_
+
 
 

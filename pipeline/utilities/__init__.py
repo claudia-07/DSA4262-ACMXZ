@@ -1,1 +1,1 @@
-from .retraining import get_first_transaction
+from .retraining import (get_first_transaction, get_percent)
