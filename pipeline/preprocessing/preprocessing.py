@@ -3,7 +3,7 @@ import numpy as np
 
 from parameters import (model_features_list, key_columns, non_nan_cols, stratify_col, 
                         train_percent, validation_percent, test_percent, seed, id_col, 
-                        target_encode_cols, numeric_cols, target_col,
+                        target_encode_cols, numeric_cols, target_col, position_col, 
                         undersampling_strategy, oversampling_strategy)
 from utilities import get_percent
 
@@ -52,11 +52,15 @@ class Preprocessing:
         return self.df
     
     def feature_eng(self):
-        self.df = pd.DataFrame(self.df.groupby(['transcript', 'position', 'nucleotides'])
+        self.df = pd.DataFrame(self.df.groupby(['transcript', 'position', 'nucleotides', 'label'], as_index=False)
                             .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
                                     'std': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
                                     'mean': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
-        self.df.columns = ['transcript', 'position', 'nucleotides', 'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean', 'std_25', 'std_50', 'std_75', 'std_mean', 'mean_25', 'mean_50', 'mean_75', 'mean_mean']
+        self.df.columns = ['transcript', 'position', 'nucleotides', 'label',
+                            'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean', 
+                            'std_25', 'std_50', 'std_75', 'std_mean', 
+                            'mean_25', 'mean_50', 'mean_75', 'mean_mean']
+        return self.df
     
     def split_stratified_into_train_val_test(self, random_state=None):
         '''Function to split the data into train,test and validation datasets. 
@@ -91,7 +95,7 @@ class Preprocessing:
             list_train: List
                 List containing id_cols for training 
         '''
-        # getting df for splitting
+        # getting unique id_col and stratify_col for splitting
         temp_col = id_col + [stratify_col]
         df_target = self.df[temp_col].drop_duplicates()
         X = df_target  # Contains all columns.
@@ -130,20 +134,22 @@ class Preprocessing:
         list_val = np.array(self.df_val[id_col])
         list_val = [tuple(i) for i in list_val]
 
-        # creating train data with all transactions, removing id_cols
+        # creating train/test/val data, removing identifying columns as they are not features. 
+        # identifying columns include id_col and position_col
+        temp_col = id_col + position_col
         self.df_train = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_train)]
-        self.df_train.drop(columns=id_col, inplace=True)
+        self.df_train.drop(columns=temp_col, inplace=True)
         self.df_test = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_test)]
-        self.df_test.drop(columns=id_col, inplace=True)
+        self.df_test.drop(columns=temp_col, inplace=True)
         self.df_val = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_val)]
         df_val_id = self.df_val.copy()
-        self.df_val.drop(columns=id_col, inplace=True)
+        self.df_val.drop(columns=temp_col, inplace=True)
 
 
         # printing percentages
-        print("train percentage:", len(self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
-        print("test percentage:", len(self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
-        print("val percentage:", len(self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
+        print("train target percentage:", len(self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
+        print("test target percentage:", len(self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
+        print("val target percentage:", len(self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
 
         # printing df shape
         print("train data shape:", self.df_train.shape)
@@ -151,12 +157,12 @@ class Preprocessing:
         print("test data shape:", self.df_test.shape)
 
         # separating df from target column: features -> X | target -> y
-        self.X_train = self.df_train.drop(columns=target_col)
-        self.y_train = pd.DataFrame(self.df_train[target_col])
-        self.X_val = self.df_val.drop(columns=target_col)
-        self.y_val = pd.DataFrame(self.df_val[target_col])
-        self.X_test = self.df_test.drop(columns=target_col)
-        self.y_test = pd.DataFrame(self.df_test[target_col])
+        self.X_train = self.df_train.drop(columns=target_col).reset_index(drop=True)
+        self.y_train = pd.DataFrame(self.df_train[target_col]).reset_index(drop=True)
+        self.X_val = self.df_val.drop(columns=target_col).reset_index(drop=True)
+        self.y_val = pd.DataFrame(self.df_val[target_col]).reset_index(drop=True)
+        self.X_test = self.df_test.drop(columns=target_col).reset_index(drop=True)
+        self.y_test = pd.DataFrame(self.df_test[target_col]).reset_index(drop=True)
 
         return(self.df_train, self.df_test, self.df_val, self.X_train, self.y_train,
                 self.X_val, self.y_val, self.X_test, self.y_test, df_val_id, list_train)
