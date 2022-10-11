@@ -27,5 +27,8 @@ def get_percent(n):
     percentile_.__name__ = 'percentile_%s' % n
     return percentile_
 
-
+def onehote(sequence):
+    mapping = {"A": 0, "C": 1, "G": 2, "T": 3}
+    seq2 = [mapping[i] for i in sequence]
+    return np.eye(4)[seq2]
 
