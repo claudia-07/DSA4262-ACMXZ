@@ -230,6 +230,9 @@ class Preprocessing:
             self.X_train_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
             self.X_train_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
             self.X_train_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+        
+        # dropping nucleotides column
+        self.X_train_enc = self.X_train_enc.drop(columns=['nucleotides'])
 
         return self.X_train_enc, self.pipe
     
@@ -263,6 +266,9 @@ class Preprocessing:
                 self.X_test_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
                 self.X_test_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
 
+            # dropping nucleotides column
+            self.X_test_enc = self.X_test_enc.drop(columns=['nucleotides'])
+
             return self.X_test_enc
         else: # for validation
             self.X_val_enc = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
@@ -277,6 +283,9 @@ class Preprocessing:
                 self.X_val_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
                 self.X_val_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
                 self.X_val_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+
+            # dropping nucleotides column
+            self.X_val_enc = self.X_val_enc.drop(columns=['nucleotides'])
 
             return self.X_val_enc
         

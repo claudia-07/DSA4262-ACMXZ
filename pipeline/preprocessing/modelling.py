@@ -11,11 +11,16 @@ import lightgbm
 import shap
 
 from parameters import (seed, num_splits, max_n_iter, scale_pos_weight, scoring)
-from preprocessing import Preprocessing
 
-class Modelling(Preprocessing):
-    def __init__(self, df):
-        super().__init__(df)
+class Modelling():
+    def __init__(self, X_train, y_train, X_val, y_val, df_val):
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X_val = X_val
+        self.y_val = y_val
+        self.df_val = df_val
+        
+        
 
     def plot_feature_importance(model, X_val, max_display=20):
         explainer = shap.TreeExplainer(model)
@@ -69,7 +74,7 @@ class Modelling(Preprocessing):
                 scale_pos_weight=scale_pos_weight, 
                 **config,
             )
-            scores = cross_val_score(lgbm_model, self.X_train_enc, self.y_train, scoring=scoring, cv=kfolds)
+            scores = cross_val_score(lgbm_model, self.X_train, self.y_train, scoring=scoring, cv=kfolds)
             auc = np.mean(scores)
             return {"loss":-auc,"status":'ok'}
 
@@ -77,7 +82,7 @@ class Modelling(Preprocessing):
         print("%-20s %s" % ("Start Time", start_time))
 
         # search space
-        best=fmin(fn = my_lgbm, # function to optimize
+        best = fmin(fn = my_lgbm, # function to optimize
                 space = lgbm_tune_kwargs, 
                 algo = tpe.suggest, # optimization algorithm, hyperotp will select its parameters automatically
                 max_evals = max_n_iter, # maximum number of iterations
@@ -112,12 +117,12 @@ class Modelling(Preprocessing):
         print(lgbm_model)
         
         # scoring
-        scores =cross_val_score(lgbm_model, self.X_train_enc, self.y_train, scoring=scoring, cv=kfolds)
+        scores =cross_val_score(lgbm_model, self.X_train, self.y_train, scoring=scoring, cv=kfolds)
         auc = np.mean(scores)
         print("auc:",auc)
 
         # feature importance
-        lgbm_model.fit( self.X_train_enc, self.y_train) 
+        lgbm_model.fit( self.X_train, self.y_train) 
         self.plot_feature_importance(lgbm_model, self.X_val, max_display=10)
         
         # creating pipeline of model
