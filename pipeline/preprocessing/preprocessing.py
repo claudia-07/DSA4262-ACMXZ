@@ -3,17 +3,17 @@ import numpy as np
 
 from parameters import (model_features_list, key_columns, non_nan_cols, stratify_col, 
                         train_percent, validation_percent, test_percent, seed, id_col, 
-                        target_encode_cols, numeric_cols, target_col, position_col, 
+                        numeric_cols, target_col, position_col, one_hot_col, 
                         undersampling_strategy, oversampling_strategy)
-from utilities import get_percent
+from utilities import (get_percent, onehote)
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTENC
 from imblearn.under_sampling import RandomUnderSampler
-from category_encoders import TargetEncoder
+
 
 
 class Preprocessing:
@@ -31,6 +31,10 @@ class Preprocessing:
         self.X_test = None
         self.y_test = None
         self.pipe = None
+        self.X_train_enc = None
+        self.X_val_enc = None
+        self.X_test_enc = None
+        self.X_train_oversampled = None
         
     def model_features_and_clean(self):
         '''Function to select features for modelling and clean the initial raw data. 
@@ -142,7 +146,7 @@ class Preprocessing:
         self.df_test = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_test)]
         self.df_test.drop(columns=temp_col, inplace=True)
         self.df_val = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_val)]
-        df_val_id = self.df_val.copy()
+        df_val_id = self.df_val.copy() # df_val_id contains all features + idenifying columns
         self.df_val.drop(columns=temp_col, inplace=True)
 
 
@@ -167,6 +171,24 @@ class Preprocessing:
         return(self.df_train, self.df_test, self.df_val, self.X_train, self.y_train,
                 self.X_val, self.y_val, self.X_test, self.y_test, df_val_id, list_train)
 
+    def oversample_undersample(self, sampling=True):
+        '''Function to oversample minority and undersample majority.
+
+        :Returns:
+        ---------
+            self.X_train_oversampled: DataFrame
+                DataFrame contiaining oversampled and understampled training data only for first purchase date excluding target variable
+        '''
+        self.X_train_oversampled = self.X_train.copy()
+
+        if sampling:
+            undersample = RandomUnderSampler(sampling_strategy = undersampling_strategy, random_state=seed)
+            oversample = SMOTENC(categorical_features=[0], sampling_strategy = oversampling_strategy, random_state=seed)
+            self.X_train_oversampled, self.y_train = undersample.fit_resample(self.X_train_oversampled, self.y_train)
+            self.X_train_oversampled, self.y_train = oversample.fit_resample(self.X_train_oversampled, self.y_train)
+
+        return self.X_train_oversampled, self.y_train
+
 
     def encoding_train(self):
         '''Function to encode categorical features for training data.
@@ -181,28 +203,38 @@ class Preprocessing:
             pipe: Pipeline
                 Pipeline for encoding and standardization
         '''
-
         # piping the encoding
         numeric_encoder = Pipeline([('scale', MinMaxScaler())])
-        target_encoder = Pipeline([('target_encode', 
-                                        TargetEncoder(cols = target_encode_cols, 
-                                        handle_unknown='return_nan'))])
         preprocessor = ColumnTransformer(transformers = [
-                                            ("num", numeric_encoder, numeric_cols),
-                                            ("target_encode", target_encoder, target_encode_cols)], 
+                                            ("num", numeric_encoder, numeric_cols)], 
                                             remainder = 'passthrough')
 
         # getting list of column names to map
-        self.columns_to_map = numeric_cols + target_encode_cols
+        self.columns_to_map = numeric_cols + one_hot_col
 
         print('columns after preprocessing :', self.columns_to_map,  '\n')
 
         # applying encoding on columns in df and creating pipeline
-        self.X_train = pd.DataFrame({col: vals for vals, col in zip(preprocessor.fit_transform(self.X_train, self.y_train).T, self.columns_to_map)})
+        self.X_train_enc = pd.DataFrame({col: vals for vals, col in zip(preprocessor.fit_transform(self.X_train_oversampled, self.y_train).T, self.columns_to_map)})
         self.pipe = Pipeline(steps=[("preprocessor", preprocessor)])
-        self.pipe = self.pipe.fit(self.X_train, self.y_train)
+        self.pipe = self.pipe.fit(self.X_train_enc, self.y_train)
 
-        return self.X_train, self.pipe
+        # encoding nucleotides
+        for i in range(5):
+            self.X_train_enc['position_' + str(i) + '_A'] = 0
+            self.X_train_enc['position_' + str(i) + '_C'] = 0
+            self.X_train_enc['position_' + str(i) + '_G'] = 0
+            self.X_train_enc['position_' + str(i) + '_T'] = 0
+            temp = self.X_train_enc['nucleotides'].apply(lambda x: x[i])
+            self.X_train_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+            self.X_train_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+            self.X_train_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+            self.X_train_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+        
+        # dropping nucleotides column
+        self.X_train_enc = self.X_train_enc.drop(columns=['nucleotides'])
+
+        return self.X_train_enc, self.pipe
     
 
     def encoding_test_val(self, test = True):
@@ -220,39 +252,43 @@ class Preprocessing:
         '''
 
         # applying encoding on columns in df
-            # for test
-        if test == True:
-            self.X_test = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_test).T, self.columns_to_map)})
-            return self.X_test
-            # for validation
-        else:
-            self.X_val = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
-            return self.X_val
+        if test == True: # for test
+            self.X_test_enc = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_test).T, self.columns_to_map)})
+            # encoding nucleotides
+            for i in range(5):
+                self.X_test_enc['position_' + str(i) + '_A'] = 0
+                self.X_test_enc['position_' + str(i) + '_C'] = 0
+                self.X_test_enc['position_' + str(i) + '_G'] = 0
+                self.X_test_enc['position_' + str(i) + '_T'] = 0
+                temp = self.X_test_enc['nucleotides'].apply(lambda x: x[i])
+                self.X_test_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+                self.X_test_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+                self.X_test_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+                self.X_test_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+
+            # dropping nucleotides column
+            self.X_test_enc = self.X_test_enc.drop(columns=['nucleotides'])
+
+            return self.X_test_enc
+        else: # for validation
+            self.X_val_enc = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
+            # encoding nucleotides
+            for i in range(5):
+                self.X_val_enc['position_' + str(i) + '_A'] = 0
+                self.X_val_enc['position_' + str(i) + '_C'] = 0
+                self.X_val_enc['position_' + str(i) + '_G'] = 0
+                self.X_val_enc['position_' + str(i) + '_T'] = 0
+                temp = self.X_val_enc['nucleotides'].apply(lambda x: x[i])
+                self.X_val_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+                self.X_val_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+                self.X_val_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+                self.X_val_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+
+            # dropping nucleotides column
+            self.X_val_enc = self.X_val_enc.drop(columns=['nucleotides'])
+
+            return self.X_val_enc
         
         
 
-    def oversample_undersample(x_df, y_df, sampling=True):
-        '''Function to oversample minority and undersample majority.
 
-        :Parameters:
-        ------------
-            x_df: DataFrame
-                DataFrame containing training data only for first purchase date excluding the target variable 
-            y_df: DataFrame
-                DataFrame containing target variable for training data only for first purchase date
-
-        :Returns:
-        ---------
-            x_df: DataFrame
-                DataFrame contiaining oversampled and understampled training data only for first purchase date excluding target variable
-            y_df: DataFrame
-                DataFrame containing oversampled and undersampled target variable for training data only for first purchase date
-
-        '''
-
-        if sampling:
-            undersample = RandomUnderSampler(sampling_strategy = undersampling_strategy, random_state=seed)
-            oversample = SMOTE(sampling_strategy = oversampling_strategy, random_state=seed)
-            x_df, y_df = undersample.fit_resample(x_df, y_df)
-            x_df, y_df = oversample.fit_resample(x_df, y_df)
-        return x_df, y_df
