@@ -187,7 +187,7 @@ class Preprocessing:
             self.X_train_oversampled, self.y_train = undersample.fit_resample(self.X_train_oversampled, self.y_train)
             self.X_train_oversampled, self.y_train = oversample.fit_resample(self.X_train_oversampled, self.y_train)
 
-        return self.X_train_oversampled
+        return self.X_train_oversampled, self.y_train
 
 
     def encoding_train(self):
