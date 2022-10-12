@@ -146,7 +146,7 @@ class Preprocessing:
         self.df_test = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_test)]
         self.df_test.drop(columns=temp_col, inplace=True)
         self.df_val = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_val)]
-        df_val_id = self.df_val.copy()
+        df_val_id = self.df_val.copy() # df_val_id contains all features + idenifying columns
         self.df_val.drop(columns=temp_col, inplace=True)
 
 
