@@ -1,7 +1,7 @@
-## Labelled data
+## archuve
 Merging parsed data with data.info, which contains classification labels
 
-## Parsed data
+## merged data
 Parsing of JSON and info files into dataframes
 
 ## Preprocessed data
@@ -16,4 +16,4 @@ Encoded data for training, separated by quantiles (25th, 50th, 75th) and mean
 Encoded data for validation
 Note: Require dropping of columns for X_val_enc before using
 
-## Raw data
+## raw data
