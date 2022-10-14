@@ -61,14 +61,26 @@ class Preprocessing:
         return self.df
 
     def feature_eng(self):
-        self.df = pd.DataFrame(self.df.groupby(['gene_id', 'transcript', 'position', 'nucleotides', 'label'], as_index=False)
-                               .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                     'std': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                    'mean': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
-        self.df.columns = ['gene_id', 'transcript', 'position', 'nucleotides', 'label',
-                           'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean',
-                           'std_25', 'std_50', 'std_75', 'std_mean',
-                           'mean_25', 'mean_50', 'mean_75', 'mean_mean']
+        self.df = pd.DataFrame(self.df.groupby(['gene_id', 'transcript', 'position', 'nucleotides', 'reads_count', 'label'], as_index=False)
+                                .agg({'dwellingtime_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'std_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'mean_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'dwellingtime_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'std_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'mean_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'dwellingtime_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'std_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                        'mean_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
+        self.df.columns = ['gene_id', 'transcript', 'position', 'nucleotides', 'reads_count', 'label',
+                            'dwelling_time_-1_25', 'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean',
+                            'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean',
+                            'mean_-1_25', 'mean_-1_50', 'mean_-1_75', 'mean_-1_mean',
+                            'dwelling_time_0_25', 'dwelling_time_0_50', 'dwelling_time_0_75', 'dwelling_time_0_mean',
+                            'std_0_25', 'std_0_50', 'std_0_75', 'std_0_mean',
+                            'mean_0_25', 'mean_0_50', 'mean_0_75', 'mean_0_mean',
+                            'dwelling_time_+1_25', 'dwelling_time_+1_50', 'dwelling_time_+1_75', 'dwelling_time_+1_mean',
+                            'std_+1_25', 'std_+1_50', 'std_+1_75', 'std_+1_mean',
+                            'mean_+1_25', 'mean_+1_50', 'mean_+1_75', 'mean_+1_mean']
         return self.df
 
     def split_stratified_into_train_val_test(self, random_state=None):
@@ -201,14 +213,10 @@ class Preprocessing:
         self.X_train_oversampled = self.X_train.copy()
 
         if sampling:
-            undersample = RandomUnderSampler(
-                sampling_strategy=undersampling_strategy, random_state=seed)
-            oversample = SMOTENC(categorical_features=[
-                                 0], sampling_strategy=oversampling_strategy, random_state=seed)
-            self.X_train_oversampled, self.y_train = undersample.fit_resample(
-                self.X_train_oversampled, self.y_train)
-            self.X_train_oversampled, self.y_train = oversample.fit_resample(
-                self.X_train_oversampled, self.y_train)
+            undersample = RandomUnderSampler(sampling_strategy=undersampling_strategy, random_state=seed)
+            oversample = SMOTENC(categorical_features=[0], sampling_strategy=oversampling_strategy, random_state=seed)
+            self.X_train_oversampled, self.y_train = undersample.fit_resample(self.X_train_oversampled, self.y_train)
+            self.X_train_oversampled, self.y_train = oversample.fit_resample(self.X_train_oversampled, self.y_train)
 
         return self.X_train_oversampled, self.y_train
 
