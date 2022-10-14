@@ -1,19 +1,24 @@
-import pandas as pd
 import numpy as np
-
-from parameters import (model_features_list, key_columns, non_nan_cols, stratify_col, 
-                        train_percent, validation_percent, test_percent, seed, id_col, 
-                        numeric_cols, target_col, position_col, one_hot_col, 
-                        undersampling_strategy, oversampling_strategy)
-from utilities import (get_percent, onehote)
-
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTENC
-from imblearn.under_sampling import RandomUnderSampler
+import pathlib
+import sys
 
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import SMOTENC
+
+THIS_DIR = pathlib.Path(__file__).resolve()
+PROJ_DIR = THIS_DIR.parents[2]
+sys.path.append(PROJ_DIR.as_posix())
+
+from util.training import get_percent, onehote
+from util.parameters import (model_features_list, key_columns, non_nan_cols, stratify_col,
+                             train_percent, validation_percent, test_percent, seed, id_col,
+                             numeric_cols, target_col, position_col, one_hot_col,
+                             undersampling_strategy, oversampling_strategy)
 
 
 class Preprocessing:
@@ -35,7 +40,7 @@ class Preprocessing:
         self.X_val_enc = None
         self.X_test_enc = None
         self.X_train_oversampled = None
-        
+
     def model_features_and_clean(self):
         '''Function to select features for modelling and clean the initial raw data. 
             Removes rows which contain NAN values in key_columns, and converts all NAN values to 0 for non_nan_cols
@@ -54,18 +59,18 @@ class Preprocessing:
         self.df[non_nan_cols] = self.df[non_nan_cols].fillna(0)
         self.df = self.df.dropna(subset=key_columns)
         return self.df
-    
+
     def feature_eng(self):
         self.df = pd.DataFrame(self.df.groupby(['gene_id', 'transcript', 'position', 'nucleotides', 'label'], as_index=False)
-                            .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
-                                    'std': [get_percent(25), get_percent(50), get_percent(75), np.mean], 
+                               .agg({'dwelling_time': [get_percent(25), get_percent(50), get_percent(75), np.mean],
+                                     'std': [get_percent(25), get_percent(50), get_percent(75), np.mean],
                                     'mean': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
         self.df.columns = ['gene_id', 'transcript', 'position', 'nucleotides', 'label',
-                            'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean', 
-                            'std_25', 'std_50', 'std_75', 'std_mean', 
-                            'mean_25', 'mean_50', 'mean_75', 'mean_mean']
+                           'dwelling_time_25', 'dwelling_time_50', 'dwelling_time_75', 'dwelling_time_mean',
+                           'std_25', 'std_50', 'std_75', 'std_mean',
+                           'mean_25', 'mean_50', 'mean_75', 'mean_mean']
         return self.df
-    
+
     def split_stratified_into_train_val_test(self, random_state=None):
         '''Function to split the data into train,test and validation datasets. 
 
@@ -109,26 +114,28 @@ class Preprocessing:
         # parameter checks
         if train_percent + validation_percent + test_percent != 1.0:
             raise ValueError('fractions %f, %f, %f do not add up to 1.0' %
-                            (train_percent, validation_percent, test_percent))
+                             (train_percent, validation_percent, test_percent))
 
         if stratify_col not in df_target.columns:
             raise ValueError('%s is not a column in the dataframe' %
-                            (stratify_col))
-
+                             (stratify_col))
 
         # Split original dataframe into train and temp dataframes.
         self.df_train, df_temp, self.y_train, y_temp = train_test_split(X, y, stratify=y,
-                                                                test_size=(1.0 - train_percent),
-                                                                random_state=random_state)
+                                                                        test_size=(
+                                                                            1.0 - train_percent),
+                                                                        random_state=random_state)
 
         # Split the temp dataframe into val and test dataframes.
-        relative_test_percent = test_percent / (validation_percent + test_percent)
+        relative_test_percent = test_percent / \
+            (validation_percent + test_percent)
         self.df_val, self.df_test, self.y_val, self.y_test = train_test_split(df_temp, y_temp,
-                                                            stratify=y_temp,
-                                                            test_size=relative_test_percent,
-                                                            random_state=random_state)
+                                                                              stratify=y_temp,
+                                                                              test_size=relative_test_percent,
+                                                                              random_state=random_state)
 
-        assert len(df_target) == len(self.df_train) + len(self.df_val) + len(self.df_test)
+        assert len(df_target) == len(self.df_train) + \
+            len(self.df_val) + len(self.df_test)
 
         # getting list of id_cols of each df
         list_train = np.array(self.df_train[id_col])
@@ -138,22 +145,28 @@ class Preprocessing:
         list_val = np.array(self.df_val[id_col])
         list_val = [tuple(i) for i in list_val]
 
-        # creating train/test/val data, removing identifying columns as they are not features. 
+        # creating train/test/val data, removing identifying columns as they are not features.
         # identifying columns include id_col and position_col
         temp_col = id_col + position_col
-        self.df_train = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_train)]
+        self.df_train = self.df[self.df[id_col].apply(
+            tuple, axis=1).isin(list_train)]
         self.df_train.drop(columns=temp_col, inplace=True)
-        self.df_test = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_test)]
+        self.df_test = self.df[self.df[id_col].apply(
+            tuple, axis=1).isin(list_test)]
         self.df_test.drop(columns=temp_col, inplace=True)
-        self.df_val = self.df[self.df[id_col].apply(tuple, axis = 1).isin(list_val)]
+        self.df_val = self.df[self.df[id_col].apply(
+            tuple, axis=1).isin(list_val)]
+        # df_val_id contains all features + idenifying columns
         df_val_id = self.df_val.copy()
         self.df_val.drop(columns=temp_col, inplace=True)
 
-
         # printing percentages
-        print("train target percentage:", len(self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
-        print("test target percentage:", len(self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
-        print("val target percentage:", len(self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
+        print("train target percentage:", len(
+            self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
+        print("test target percentage:", len(
+            self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
+        print("val target percentage:", len(
+            self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
 
         # printing df shape
         print("train data shape:", self.df_train.shape)
@@ -161,15 +174,21 @@ class Preprocessing:
         print("test data shape:", self.df_test.shape)
 
         # separating df from target column: features -> X | target -> y
-        self.X_train = self.df_train.drop(columns=target_col).reset_index(drop=True)
-        self.y_train = pd.DataFrame(self.df_train[target_col]).reset_index(drop=True)
-        self.X_val = self.df_val.drop(columns=target_col).reset_index(drop=True)
-        self.y_val = pd.DataFrame(self.df_val[target_col]).reset_index(drop=True)
-        self.X_test = self.df_test.drop(columns=target_col).reset_index(drop=True)
-        self.y_test = pd.DataFrame(self.df_test[target_col]).reset_index(drop=True)
+        self.X_train = self.df_train.drop(
+            columns=target_col).reset_index(drop=True)
+        self.y_train = pd.DataFrame(
+            self.df_train[target_col]).reset_index(drop=True)
+        self.X_val = self.df_val.drop(
+            columns=target_col).reset_index(drop=True)
+        self.y_val = pd.DataFrame(
+            self.df_val[target_col]).reset_index(drop=True)
+        self.X_test = self.df_test.drop(
+            columns=target_col).reset_index(drop=True)
+        self.y_test = pd.DataFrame(
+            self.df_test[target_col]).reset_index(drop=True)
 
         return(self.df_train, self.df_test, self.df_val, self.X_train, self.y_train,
-                self.X_val, self.y_val, self.X_test, self.y_test, df_val_id, list_train)
+               self.X_val, self.y_val, self.X_test, self.y_test, df_val_id, list_train)
 
     def oversample_undersample(self, sampling=True):
         '''Function to oversample minority and undersample majority.
@@ -182,13 +201,16 @@ class Preprocessing:
         self.X_train_oversampled = self.X_train.copy()
 
         if sampling:
-            undersample = RandomUnderSampler(sampling_strategy = undersampling_strategy, random_state=seed)
-            oversample = SMOTENC(categorical_features=[0], sampling_strategy = oversampling_strategy, random_state=seed)
-            self.X_train_oversampled, self.y_train = undersample.fit_resample(self.X_train_oversampled, self.y_train)
-            self.X_train_oversampled, self.y_train = oversample.fit_resample(self.X_train_oversampled, self.y_train)
+            undersample = RandomUnderSampler(
+                sampling_strategy=undersampling_strategy, random_state=seed)
+            oversample = SMOTENC(categorical_features=[
+                                 0], sampling_strategy=oversampling_strategy, random_state=seed)
+            self.X_train_oversampled, self.y_train = undersample.fit_resample(
+                self.X_train_oversampled, self.y_train)
+            self.X_train_oversampled, self.y_train = oversample.fit_resample(
+                self.X_train_oversampled, self.y_train)
 
-        return self.X_train_oversampled
-
+        return self.X_train_oversampled, self.y_train
 
     def encoding_train(self):
         '''Function to encode categorical features for training data.
@@ -205,9 +227,9 @@ class Preprocessing:
         '''
         # piping the encoding
         numeric_encoder = Pipeline([('scale', MinMaxScaler())])
-        preprocessor = ColumnTransformer(transformers = [
-                                            ("num", numeric_encoder, numeric_cols)], 
-                                            remainder = 'passthrough')
+        preprocessor = ColumnTransformer(transformers=[
+            ("num", numeric_encoder, numeric_cols)],
+            remainder='passthrough')
 
         # getting list of column names to map
         self.columns_to_map = numeric_cols + one_hot_col
@@ -215,7 +237,8 @@ class Preprocessing:
         print('columns after preprocessing :', self.columns_to_map,  '\n')
 
         # applying encoding on columns in df and creating pipeline
-        self.X_train_enc = pd.DataFrame({col: vals for vals, col in zip(preprocessor.fit_transform(self.X_train_oversampled, self.y_train).T, self.columns_to_map)})
+        self.X_train_enc = pd.DataFrame({col: vals for vals, col in zip(
+            preprocessor.fit_transform(self.X_train_oversampled, self.y_train).T, self.columns_to_map)})
         self.pipe = Pipeline(steps=[("preprocessor", preprocessor)])
         self.pipe = self.pipe.fit(self.X_train_enc, self.y_train)
 
@@ -230,14 +253,13 @@ class Preprocessing:
             self.X_train_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
             self.X_train_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
             self.X_train_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
-        
+
         # dropping nucleotides column
         self.X_train_enc = self.X_train_enc.drop(columns=['nucleotides'])
 
         return self.X_train_enc, self.pipe
-    
 
-    def encoding_test_val(self, test = True):
+    def encoding_test_val(self, test=True):
         '''Function to encode categorical features for test and validation data. 
 
         :Parameters:
@@ -252,8 +274,9 @@ class Preprocessing:
         '''
 
         # applying encoding on columns in df
-        if test == True: # for test
-            self.X_test_enc = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_test).T, self.columns_to_map)})
+        if test == True:  # for test
+            self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(
+                self.pipe.transform(self.X_test).T, self.columns_to_map)})
             # encoding nucleotides
             for i in range(5):
                 self.X_test_enc['position_' + str(i) + '_A'] = 0
@@ -270,8 +293,9 @@ class Preprocessing:
             self.X_test_enc = self.X_test_enc.drop(columns=['nucleotides'])
 
             return self.X_test_enc
-        else: # for validation
-            self.X_val_enc = pd.DataFrame({col:vals for vals,col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
+        else:  # for validation
+            self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(
+                self.pipe.transform(self.X_val).T, self.columns_to_map)})
             # encoding nucleotides
             for i in range(5):
                 self.X_val_enc['position_' + str(i) + '_A'] = 0
@@ -288,7 +312,3 @@ class Preprocessing:
             self.X_val_enc = self.X_val_enc.drop(columns=['nucleotides'])
 
             return self.X_val_enc
-        
-        
-
-
