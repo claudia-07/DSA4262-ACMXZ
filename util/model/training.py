@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 
 
-
-
 def get_first_transaction(df_all, list_members, with_id = False):
     # filter for customers in list_members
     df_first_tx = df_all[df_all['membership_card_id'].isin(list_members)]

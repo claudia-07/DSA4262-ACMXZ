@@ -1,2 +1,2 @@
 from .preprocessing import Preprocessing
-from .modelling import Modelling
+from ..model import modelling

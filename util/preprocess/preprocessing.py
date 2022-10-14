@@ -14,8 +14,8 @@ THIS_DIR = pathlib.Path(__file__).resolve()
 PROJ_DIR = THIS_DIR.parents[2]
 sys.path.append(PROJ_DIR.as_posix())
 
-from util.training import get_percent, onehote
-from util.parameters import (model_features_list, key_columns, non_nan_cols, stratify_col,
+from util.model.training import get_percent, onehote
+from util.preprocess.parameters import (model_features_list, key_columns, non_nan_cols, stratify_col,
                              train_percent, validation_percent, test_percent, seed, id_col,
                              numeric_cols, target_col, position_col, one_hot_col,
                              undersampling_strategy, oversampling_strategy)

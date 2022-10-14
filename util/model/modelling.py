@@ -1,4 +1,4 @@
-# Importing Libraries
+# # Importing Libraries
 import numpy as np
 import datetime
 from datetime import datetime, timedelta
@@ -9,8 +9,14 @@ from hyperopt import fmin, tpe, hp, Trials
 from sklearn.metrics import accuracy_score, matthews_corrcoef, confusion_matrix, classification_report
 import lightgbm
 import shap
+import pathlib
+import sys
 
-from parameters import (seed, num_splits, max_n_iter, scale_pos_weight, scoring)
+THIS_DIR = pathlib.Path(__file__).resolve()
+PROJ_DIR = THIS_DIR.parents[2]
+sys.path.append(PROJ_DIR.as_posix())
+
+from util.preprocess.parameters import (seed, num_splits, max_n_iter, scale_pos_weight, scoring)
 
 class Modelling():
     def __init__(self, X_train, y_train, X_val, y_val, df_val):
