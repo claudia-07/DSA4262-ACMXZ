@@ -1,10 +1,10 @@
-## archuve
-Merging parsed data with data.info, which contains classification labels
+## archive
+Old data which includes parsed data (parsed JSON and info files into dataframes) and merged data (data with classification labels)
 
 ## merged data
-Parsing of JSON and info files into dataframes
+Updated data with classification labels (as of 14th October)
 
-## Preprocessed data
+## preprocessed data
 ### archive
 Raw data before encoding
 ### test
