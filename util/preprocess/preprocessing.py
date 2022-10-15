@@ -236,7 +236,7 @@ class Preprocessing:
         self.pipe = self.pipe.fit(self.X_train_enc, self.y_train)
 
         # encoding nucleotides
-        for i in range(5):
+        for i in range(7):
             self.X_train_enc['position_' + str(i) + '_A'] = 0
             self.X_train_enc['position_' + str(i) + '_C'] = 0
             self.X_train_enc['position_' + str(i) + '_G'] = 0
