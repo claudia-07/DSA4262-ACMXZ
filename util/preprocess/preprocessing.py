@@ -271,7 +271,7 @@ class Preprocessing:
             self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(
                 self.pipe.transform(self.X_test).T, self.columns_to_map)})
             # encoding nucleotides
-            for i in range(5):
+            for i in range(7):
                 self.X_test_enc['position_' + str(i) + '_A'] = 0
                 self.X_test_enc['position_' + str(i) + '_C'] = 0
                 self.X_test_enc['position_' + str(i) + '_G'] = 0
@@ -290,7 +290,7 @@ class Preprocessing:
             self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(
                 self.pipe.transform(self.X_val).T, self.columns_to_map)})
             # encoding nucleotides
-            for i in range(5):
+            for i in range(7):
                 self.X_val_enc['position_' + str(i) + '_A'] = 0
                 self.X_val_enc['position_' + str(i) + '_C'] = 0
                 self.X_val_enc['position_' + str(i) + '_G'] = 0
