@@ -117,8 +117,8 @@ class Preprocessing:
                 List containing id_cols for training 
         '''
         # getting unique id_col and stratify_col for splitting
-        temp_col = id_col + [stratify_col]
-        df_target = self.df[temp_col].drop_duplicates()
+        split_col = id_col + [stratify_col]
+        df_target = self.df[split_col].drop_duplicates()
         X = df_target  # Contains all columns.
         # Dataframe of just the column on which to stratify.
         y = df_target[[stratify_col]]
@@ -150,27 +150,20 @@ class Preprocessing:
             len(self.df_val) + len(self.df_test)
 
         # getting list of id_cols of each df
-        list_train = np.array(self.df_train[id_col])
+        list_train = np.array(self.df_train[split_col])
         list_train = [tuple(i) for i in list_train]
-        list_test = np.array(self.df_test[id_col])
+        list_test = np.array(self.df_test[split_col])
         list_test = [tuple(i) for i in list_test]
-        list_val = np.array(self.df_val[id_col])
+        list_val = np.array(self.df_val[split_col])
         list_val = [tuple(i) for i in list_val]
 
         # creating train/test/val data, removing identifying columns as they are not features.
         # identifying columns include id_col and position_col
-        temp_col = id_col + position_col
-        self.df_train = self.df[self.df[id_col].apply(
-            tuple, axis=1).isin(list_train)]
-        self.df_train.drop(columns=temp_col, inplace=True)
-        self.df_test = self.df[self.df[id_col].apply(
-            tuple, axis=1).isin(list_test)]
-        self.df_test.drop(columns=temp_col, inplace=True)
-        self.df_val = self.df[self.df[id_col].apply(
-            tuple, axis=1).isin(list_val)]
+        self.df_train = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_train)]
+        self.df_test = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_test)]
+        self.df_val = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_val)]
         # df_val_id contains all features + idenifying columns
         df_val_id = self.df_val.copy()
-        self.df_val.drop(columns=temp_col, inplace=True)
 
         # printing percentages
         print("train target percentage:", len(
@@ -186,18 +179,13 @@ class Preprocessing:
         print("test data shape:", self.df_test.shape)
 
         # separating df from target column: features -> X | target -> y
-        self.X_train = self.df_train.drop(
-            columns=target_col).reset_index(drop=True)
-        self.y_train = pd.DataFrame(
-            self.df_train[target_col]).reset_index(drop=True)
-        self.X_val = self.df_val.drop(
-            columns=target_col).reset_index(drop=True)
-        self.y_val = pd.DataFrame(
-            self.df_val[target_col]).reset_index(drop=True)
-        self.X_test = self.df_test.drop(
-            columns=target_col).reset_index(drop=True)
-        self.y_test = pd.DataFrame(
-            self.df_test[target_col]).reset_index(drop=True)
+        temp_col = split_col + position_col
+        self.X_train = self.df_train.drop(columns=temp_col).reset_index(drop=True)
+        self.y_train = pd.DataFrame(self.df_train[target_col]).reset_index(drop=True)
+        self.X_val = self.df_val.drop(columns=temp_col).reset_index(drop=True)
+        self.y_val = pd.DataFrame(self.df_val[target_col]).reset_index(drop=True)
+        self.X_test = self.df_test.drop(columns=temp_col).reset_index(drop=True)
+        self.y_test = pd.DataFrame(self.df_test[target_col]).reset_index(drop=True)
 
         return(self.df_train, self.df_test, self.df_val, self.X_train, self.y_train,
                self.X_val, self.y_val, self.X_test, self.y_test, df_val_id, list_train)
