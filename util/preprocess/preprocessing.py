@@ -149,7 +149,7 @@ class Preprocessing:
         assert len(df_target) == len(self.df_train) + \
             len(self.df_val) + len(self.df_test)
 
-        # getting list of id_cols of each df
+        # getting list of splitting columns of each df
         list_train = np.array(self.df_train[split_col])
         list_train = [tuple(i) for i in list_train]
         list_test = np.array(self.df_test[split_col])
@@ -157,8 +157,7 @@ class Preprocessing:
         list_val = np.array(self.df_val[split_col])
         list_val = [tuple(i) for i in list_val]
 
-        # creating train/test/val data, removing identifying columns as they are not features.
-        # identifying columns include id_col and position_col
+        # creating train/test/val data.
         self.df_train = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_train)]
         self.df_test = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_test)]
         self.df_val = self.df[self.df[split_col].apply(tuple, axis=1).isin(list_val)]
@@ -166,12 +165,9 @@ class Preprocessing:
         df_val_id = self.df_val.copy()
 
         # printing percentages
-        print("train target percentage:", len(
-            self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
-        print("test target percentage:", len(
-            self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
-        print("val target percentage:", len(
-            self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
+        print("train target percentage:", len(self.df_train[self.df_train[target_col] == '1'])/len(self.df_train))
+        print("test target percentage:", len(self.df_test[self.df_test[target_col] == '1'])/len(self.df_test))
+        print("val target percentage:", len(self.df_val[self.df_val[target_col] == '1'])/len(self.df_val))
 
         # printing df shape
         print("train data shape:", self.df_train.shape)
@@ -179,6 +175,7 @@ class Preprocessing:
         print("test data shape:", self.df_test.shape)
 
         # separating df from target column: features -> X | target -> y
+        # removing identifying columns as they are not features
         temp_col = split_col + position_col
         self.X_train = self.df_train.drop(columns=temp_col).reset_index(drop=True)
         self.y_train = pd.DataFrame(self.df_train[target_col]).reset_index(drop=True)
