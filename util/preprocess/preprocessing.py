@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from category_encoders import OneHotEncoder
 import pathlib
 import sys
 
@@ -139,15 +140,13 @@ class Preprocessing:
                                                                         random_state=random_state)
 
         # Split the temp dataframe into val and test dataframes.
-        relative_test_percent = test_percent / \
-            (validation_percent + test_percent)
+        relative_test_percent = test_percent / (validation_percent + test_percent)
         self.df_val, self.df_test, self.y_val, self.y_test = train_test_split(df_temp, y_temp,
                                                                               stratify=y_temp,
                                                                               test_size=relative_test_percent,
                                                                               random_state=random_state)
 
-        assert len(df_target) == len(self.df_train) + \
-            len(self.df_val) + len(self.df_test)
+        assert len(df_target) == len(self.df_train) + len(self.df_val) + len(self.df_test)
 
         # getting list of splitting columns of each df
         list_train = np.array(self.df_train[split_col])
@@ -219,36 +218,42 @@ class Preprocessing:
                 Pipeline for encoding and standardization
         '''
         # piping the encoding
-        numeric_encoder = Pipeline([('scale', MinMaxScaler())])
-        preprocessor = ColumnTransformer(transformers=[
-            ("num", numeric_encoder, numeric_cols)],
-            remainder='passthrough')
+        numeric_encoder = Pipeline([('scale', StandardScaler())])
+        one_hot_encoder = Pipeline([('one_hot_enocde', OneHotEncoder(handle_unknown='ignore'))])
+        preprocessor = ColumnTransformer(transformers=[("num", numeric_encoder, numeric_cols), 
+                                                        ("one_hot_encode", one_hot_encoder, one_hot_col)], remainder='passthrough')
 
         # getting list of column names to map
-        self.columns_to_map = numeric_cols + one_hot_col
+        for i in range(7):
+            self.X_train_oversampled['position_' + str(i)] = self.X_train_oversampled['nucleotides'].apply(lambda x: x[i])
+        ref_df = self.X_train_oversampled # df used as reference for encoding
+        self.columns_to_map = numeric_cols
+        one_hot = OneHotEncoder(handle_unknown='ignore',use_cat_names=True)
+        x_df_ohe = pd.DataFrame(one_hot.fit_transform(ref_df[one_hot_col]))
+        x_df_ohe.columns = one_hot.get_feature_names()
+        self.columns_to_map = numeric_cols + list(x_df_ohe.columns)
 
         print('columns after preprocessing :', self.columns_to_map,  '\n')
 
         # applying encoding on columns in df and creating pipeline
-        self.X_train_enc = pd.DataFrame({col: vals for vals, col in zip(
-            preprocessor.fit_transform(self.X_train_oversampled, self.y_train).T, self.columns_to_map)})
+        self.X_train_enc = pd.DataFrame({col: vals for vals, col in zip(preprocessor.fit_transform(ref_df, self.y_train).T, self.columns_to_map)})
         self.pipe = Pipeline(steps=[("preprocessor", preprocessor)])
-        self.pipe = self.pipe.fit(self.X_train_enc, self.y_train)
+        self.pipe = self.pipe.fit(ref_df, self.y_train)
 
-        # encoding nucleotides
-        for i in range(7):
-            self.X_train_enc['position_' + str(i) + '_A'] = 0
-            self.X_train_enc['position_' + str(i) + '_C'] = 0
-            self.X_train_enc['position_' + str(i) + '_G'] = 0
-            self.X_train_enc['position_' + str(i) + '_T'] = 0
-            temp = self.X_train_enc['nucleotides'].apply(lambda x: x[i])
-            self.X_train_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
-            self.X_train_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
-            self.X_train_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
-            self.X_train_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+        # # encoding nucleotides
+        # for i in range(7):
+        #     self.X_train_enc['position_' + str(i) + '_A'] = 0
+        #     self.X_train_enc['position_' + str(i) + '_C'] = 0
+        #     self.X_train_enc['position_' + str(i) + '_G'] = 0
+        #     self.X_train_enc['position_' + str(i) + '_T'] = 0
+        #     temp = self.X_train_enc['nucleotides'].apply(lambda x: x[i])
+        #     self.X_train_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+        #     self.X_train_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+        #     self.X_train_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+        #     self.X_train_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
 
-        # dropping nucleotides column
-        self.X_train_enc = self.X_train_enc.drop(columns=['nucleotides'])
+        # # dropping nucleotides column
+        # self.X_train_enc = self.X_train_enc.drop(columns=['nucleotides'])
 
         return self.X_train_enc, self.pipe
 
@@ -268,40 +273,42 @@ class Preprocessing:
 
         # applying encoding on columns in df
         if test == True:  # for test
-            self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(
-                self.pipe.transform(self.X_test).T, self.columns_to_map)})
-            # encoding nucleotides
             for i in range(7):
-                self.X_test_enc['position_' + str(i) + '_A'] = 0
-                self.X_test_enc['position_' + str(i) + '_C'] = 0
-                self.X_test_enc['position_' + str(i) + '_G'] = 0
-                self.X_test_enc['position_' + str(i) + '_T'] = 0
-                temp = self.X_test_enc['nucleotides'].apply(lambda x: x[i])
-                self.X_test_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
-                self.X_test_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
-                self.X_test_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
-                self.X_test_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+                self.X_test['position_' + str(i)] = self.X_test['nucleotides'].apply(lambda x: x[i])
+            self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(self.pipe.transform(self.X_test).T, self.columns_to_map)})
+            # # encoding nucleotides
+            # for i in range(7):
+            #     self.X_test_enc['position_' + str(i) + '_A'] = 0
+            #     self.X_test_enc['position_' + str(i) + '_C'] = 0
+            #     self.X_test_enc['position_' + str(i) + '_G'] = 0
+            #     self.X_test_enc['position_' + str(i) + '_T'] = 0
+            #     temp = self.X_test_enc['nucleotides'].apply(lambda x: x[i])
+            #     self.X_test_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+            #     self.X_test_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+            #     self.X_test_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+            #     self.X_test_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
 
-            # dropping nucleotides column
-            self.X_test_enc = self.X_test_enc.drop(columns=['nucleotides'])
+            # # dropping nucleotides column
+            # self.X_test_enc = self.X_test_enc.drop(columns=['nucleotides'])
 
             return self.X_test_enc
         else:  # for validation
-            self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(
-                self.pipe.transform(self.X_val).T, self.columns_to_map)})
-            # encoding nucleotides
             for i in range(7):
-                self.X_val_enc['position_' + str(i) + '_A'] = 0
-                self.X_val_enc['position_' + str(i) + '_C'] = 0
-                self.X_val_enc['position_' + str(i) + '_G'] = 0
-                self.X_val_enc['position_' + str(i) + '_T'] = 0
-                temp = self.X_val_enc['nucleotides'].apply(lambda x: x[i])
-                self.X_val_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
-                self.X_val_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
-                self.X_val_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
-                self.X_val_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
+                self.X_val['position_' + str(i)] = self.X_val['nucleotides'].apply(lambda x: x[i])
+            self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
+            # # encoding nucleotides
+            # for i in range(7):
+            #     self.X_val_enc['position_' + str(i) + '_A'] = 0
+            #     self.X_val_enc['position_' + str(i) + '_C'] = 0
+            #     self.X_val_enc['position_' + str(i) + '_G'] = 0
+            #     self.X_val_enc['position_' + str(i) + '_T'] = 0
+            #     temp = self.X_val_enc['nucleotides'].apply(lambda x: x[i])
+            #     self.X_val_enc['position_' + str(i) + '_A'][temp == 'A'] = 1
+            #     self.X_val_enc['position_' + str(i) + '_C'][temp == 'C'] = 1
+            #     self.X_val_enc['position_' + str(i) + '_G'][temp == 'G'] = 1
+            #     self.X_val_enc['position_' + str(i) + '_T'][temp == 'T'] = 1
 
-            # dropping nucleotides column
-            self.X_val_enc = self.X_val_enc.drop(columns=['nucleotides'])
+            # # dropping nucleotides column
+            # self.X_val_enc = self.X_val_enc.drop(columns=['nucleotides'])
 
             return self.X_val_enc

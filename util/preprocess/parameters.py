@@ -14,7 +14,7 @@ non_nan_cols = []
 
 # features - encoding
 target_col = 'label'
-one_hot_col = ['nucleotides']
+one_hot_col = ['position_0', 'position_1', 'position_2', 'position_3', 'position_4', 'position_5', 'position_6']
 numeric_cols =  ['reads_count','dwelling_time_-1_25',
                     'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean',
                     'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean', 'mean_-1_25',
