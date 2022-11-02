@@ -1,6 +1,46 @@
 import numpy as np
 import pandas as pd
 
+## function to get key of a dictionary
+def get_key(dictionary):
+    key_object = dictionary.keys()
+    key = list(key_object)[0]
+    return key
+
+## function to help concatenate columns to get transcript, position, nucleotides
+def concat_col(transcript, position, nucleotide, n):
+    t_df = pd.DataFrame([transcript]*n)
+    p_df = pd.DataFrame([position]*n)
+    nu_df = pd.DataFrame([nucleotide]*n)
+    n_df = pd.DataFrame([n]*n)
+
+    ## concat columns together
+    final_df = pd.concat([t_df, p_df, nu_df, n_df], axis = 1)
+    final_df.columns = ['transcript', 'position', 'nucleotides', 'reads_count']
+    return final_df
+
+## function to parse line in json file
+def parse_line(line):
+    ## get transcript
+    t = get_key(line)
+
+    ## get position
+    p = get_key(line[t])
+
+    ## get nucleotide seq
+    nu = get_key(line[t][p])
+
+    ## get number of reads
+    reads_count = len(line[t][p][nu])
+
+    ## get dataframe of list of reads
+    reads = pd.DataFrame(line[t][p][nu])
+
+    ## concat columns together to get transcript, position, nucleotides and all dwelling time, std, mean
+    df = pd.concat([concat_col(t, p, nu, reads_count), reads], axis = 1)
+    df.columns = ['transcript', 'position', 'nucleotides', 'reads_count', 'dwellingtime_-1', 'std_-1', 'mean_-1', 'dwellingtime_0', 'std_0', 'mean_0', 'dwellingtime_+1', 'std_+1', 'mean_+1']
+
+    return df
 
 def get_first_transaction(df_all, list_members, with_id = False):
     # filter for customers in list_members

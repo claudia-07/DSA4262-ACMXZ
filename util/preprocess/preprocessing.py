@@ -257,7 +257,7 @@ class Preprocessing:
 
         return self.X_train_enc, self.pipe
 
-    def encoding_test_val(self, test=True):
+    def encoding_test_val(self, pipe, test=True):
         '''Function to encode categorical features for test and validation data. 
 
         :Parameters:
@@ -275,7 +275,7 @@ class Preprocessing:
         if test == True:  # for test
             for i in range(7):
                 self.X_test['position_' + str(i)] = self.X_test['nucleotides'].apply(lambda x: x[i])
-            self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(self.pipe.transform(self.X_test).T, self.columns_to_map)})
+            self.X_test_enc = pd.DataFrame({col: vals for vals, col in zip(pipe.transform(self.X_test).T, self.columns_to_map)})
             # # encoding nucleotides
             # for i in range(7):
             #     self.X_test_enc['position_' + str(i) + '_A'] = 0
@@ -295,7 +295,7 @@ class Preprocessing:
         else:  # for validation
             for i in range(7):
                 self.X_val['position_' + str(i)] = self.X_val['nucleotides'].apply(lambda x: x[i])
-            self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(self.pipe.transform(self.X_val).T, self.columns_to_map)})
+            self.X_val_enc = pd.DataFrame({col: vals for vals, col in zip(pipe.transform(self.X_val).T, self.columns_to_map)})
             # # encoding nucleotides
             # for i in range(7):
             #     self.X_val_enc['position_' + str(i) + '_A'] = 0
