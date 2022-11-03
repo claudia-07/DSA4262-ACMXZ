@@ -20,15 +20,15 @@ for i in range(1, n):
     print(len(data))
     reads_df = [parse_line(data[j]) for j in range(len(data))]
     data_df = pd.concat(reads_df, axis = 0)
-    print("parsed " + n + " number of files")
+    print("parsed " + str(n) + " number of files")
 print("parsed all data")
 
 # importing info
-with open("../data/raw_data/data.info", 'r') as f:
+with open("data/raw_data/data.info", 'r') as f:
     info = f.read().splitlines()
 
 # importing encoding pipeline
-filename = '../data/raw_data/encoding_pipeline.pkl'
+filename = 'data/raw_data/encoding_pipeline.pkl'
 pipe = pickle.load(open(filename, 'rb'))
 print("imported all files")
 
