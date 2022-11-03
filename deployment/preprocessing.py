@@ -3,6 +3,7 @@ import pandas as pd
 import sys
 import pickle
 
+sys.path.append("..")
 from util.model import (parse_line)
 from util.preprocess import (Preprocessing)
 
