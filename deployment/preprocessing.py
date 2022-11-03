@@ -2,8 +2,12 @@ import json
 import pandas as pd
 import sys
 import pickle
+import pathlib
 
-sys.path.append("..")
+THIS_DIR = pathlib.Path(__file__).resolve()
+PROJ_DIR = THIS_DIR.parents[1]
+sys.path.append(PROJ_DIR.as_posix())
+
 from util.model import (parse_line)
 from util.preprocess import (Preprocessing)
 
