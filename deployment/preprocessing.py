@@ -17,6 +17,7 @@ data_df = pd.DataFrame()
 for i in range(1, n):
     data = [json.loads(line) for line in open(sys.argv[i], 'r')]
     print(type(data))
+    print(len(data))
     reads_df = [parse_line(data[j]) for j in range(len(data))]
     data_df = pd.concat(reads_df, axis = 0)
     print("parsed " + n + " number of files")
