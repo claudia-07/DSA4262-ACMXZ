@@ -20,8 +20,9 @@ for i in range(1, n):
     print(len(data))
     reads_df = [parse_line(data[j]) for j in range(len(data))]
     data_df = pd.concat(reads_df, axis = 0)
-    print("parsed " + str(n) + " number of files")
+    print("parsed " + str(n-1) + " number of files")
 print("parsed all data")
+print(data_df.columns)
 
 # importing info
 with open("data/raw_data/data.info", 'r') as f:
@@ -36,7 +37,7 @@ print("imported all files")
 info_list = [info[i].split(",") for i in range(len(info))]
 info_df = pd.DataFrame(info_list[1:]) 
 info_df.columns = info_list[0]
-df = data_df.merge(info_df, how = "left", left_on = ["transcript", "position"], right_on = ["transcript", "transcript_position"])
+df = data_df.merge(info_df, how = "left", left_on = ["transcript", "position"], right_on = ["transcript_id", "transcript_position"])
 df = df.drop(['transcript_id', 'transcript_position'],  axis = 1)
 print("merged data with info")
 
