@@ -16,15 +16,15 @@ non_nan_cols = []
 target_col = 'label'
 one_hot_col = ['position_0', 'position_1', 'position_2', 'position_3', 'position_4', 'position_5', 'position_6']
 numeric_cols =  ['reads_count','dwelling_time_-1_25',
-                    'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean',
-                    'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean', 'mean_-1_25',
-                    'mean_-1_50', 'mean_-1_75', 'mean_-1_mean', 'dwelling_time_0_25',
-                    'dwelling_time_0_50', 'dwelling_time_0_75', 'dwelling_time_0_mean',
-                    'std_0_25', 'std_0_50', 'std_0_75', 'std_0_mean', 'mean_0_25',
-                    'mean_0_50', 'mean_0_75', 'mean_0_mean', 'dwelling_time_+1_25',
-                    'dwelling_time_+1_50', 'dwelling_time_+1_75', 'dwelling_time_+1_mean',
-                    'std_+1_25', 'std_+1_50', 'std_+1_75', 'std_+1_mean', 'mean_+1_25',
-                    'mean_+1_50', 'mean_+1_75', 'mean_+1_mean']
+                    'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean', 'dwelling_time_-1_min', 'dwelling_time_-1_max',
+                    'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean', 'std_-1_min', 'std_-1_max', 'mean_-1_25',
+                    'mean_-1_50', 'mean_-1_75', 'mean_-1_mean', 'mean_-1_min', 'mean_-1_max', 'dwelling_time_0_25',
+                    'dwelling_time_0_50', 'dwelling_time_0_75', 'dwelling_time_0_mean',  'dwelling_time_0_min', 'dwelling_time_0_max',
+                    'std_0_25', 'std_0_50', 'std_0_75', 'std_0_mean',  'std_0_min', 'std_0_max', 'mean_0_25',
+                    'mean_0_50', 'mean_0_75', 'mean_0_mean','mean_0_min', 'mean_0_max', 'dwelling_time_+1_25',
+                    'dwelling_time_+1_50', 'dwelling_time_+1_75', 'dwelling_time_+1_mean', 'dwelling_time_+1_min', 'dwelling_time_+1_max',
+                    'std_+1_25', 'std_+1_50', 'std_+1_75', 'std_+1_mean','std_+1_min', 'std_+1_max', 'mean_+1_25',
+                    'mean_+1_50', 'mean_+1_75', 'mean_+1_mean', 'mean_+1_min','mean_+1_max', 'relative_position']
 
 # oversampling / undersampling
 undersampling_strategy = 0.17

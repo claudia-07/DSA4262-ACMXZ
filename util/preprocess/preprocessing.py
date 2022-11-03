@@ -15,7 +15,7 @@ THIS_DIR = pathlib.Path(__file__).resolve()
 PROJ_DIR = THIS_DIR.parents[2]
 sys.path.append(PROJ_DIR.as_posix())
 
-from util.model.training import get_percent, onehote
+from util.model.training import get_percent, relative_position
 from util.preprocess.parameters import (model_features_list, key_columns, non_nan_cols, stratify_col,
                              train_percent, validation_percent, test_percent, seed, id_col,
                              numeric_cols, target_col, position_col, one_hot_col,
@@ -63,25 +63,27 @@ class Preprocessing:
 
     def feature_eng(self):
         self.df = pd.DataFrame(self.df.groupby(['gene_id', 'transcript', 'position', 'nucleotides', 'reads_count', 'label'], as_index=False)
-                                .agg({'dwellingtime_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'std_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'mean_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'dwellingtime_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'std_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'mean_0': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'dwellingtime_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'std_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean],
-                                        'mean_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean]}))
+                                .agg({'dwellingtime_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'std_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'mean_-1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'dwellingtime_0': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'std_0': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'mean_0': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'dwellingtime_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'std_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max],
+                                        'mean_+1': [get_percent(25), get_percent(50), get_percent(75), np.mean, np.min, np.max]}))
         self.df.columns = ['gene_id', 'transcript', 'position', 'nucleotides', 'reads_count', 'label',
-                            'dwelling_time_-1_25', 'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean',
-                            'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean',
-                            'mean_-1_25', 'mean_-1_50', 'mean_-1_75', 'mean_-1_mean',
-                            'dwelling_time_0_25', 'dwelling_time_0_50', 'dwelling_time_0_75', 'dwelling_time_0_mean',
-                            'std_0_25', 'std_0_50', 'std_0_75', 'std_0_mean',
-                            'mean_0_25', 'mean_0_50', 'mean_0_75', 'mean_0_mean',
-                            'dwelling_time_+1_25', 'dwelling_time_+1_50', 'dwelling_time_+1_75', 'dwelling_time_+1_mean',
-                            'std_+1_25', 'std_+1_50', 'std_+1_75', 'std_+1_mean',
-                            'mean_+1_25', 'mean_+1_50', 'mean_+1_75', 'mean_+1_mean']
+                            'dwelling_time_-1_25', 'dwelling_time_-1_50', 'dwelling_time_-1_75', 'dwelling_time_-1_mean','dwelling_time_-1_min', 'dwelling_time_-1_max',
+                            'std_-1_25', 'std_-1_50', 'std_-1_75', 'std_-1_mean','std_-1_min', 'std_-1_max',
+                            'mean_-1_25', 'mean_-1_50', 'mean_-1_75', 'mean_-1_mean','mean_-1_min', 'mean_-1_max',
+                            'dwelling_time_0_25', 'dwelling_time_0_50', 'dwelling_time_0_75', 'dwelling_time_0_mean','dwelling_time_0_min','dwelling_time_0_max',
+                            'std_0_25', 'std_0_50', 'std_0_75', 'std_0_mean','std_0_min', 'std_0_max',
+                            'mean_0_25', 'mean_0_50', 'mean_0_75', 'mean_0_mean','mean_0_min', 'mean_0_max',
+                            'dwelling_time_+1_25', 'dwelling_time_+1_50', 'dwelling_time_+1_75', 'dwelling_time_+1_mean','dwelling_time_+1_min','dwelling_time_+1_max',
+                            'std_+1_25', 'std_+1_50', 'std_+1_75', 'std_+1_mean','std_+1_min', 'std_+1_max',
+                            'mean_+1_25', 'mean_+1_50', 'mean_+1_75', 'mean_+1_mean','mean_+1_min', 'mean_+1_max']
+        
+        self.df = relative_position(self.df)
         return self.df
 
     def split_stratified_into_train_val_test(self, random_state=None):
