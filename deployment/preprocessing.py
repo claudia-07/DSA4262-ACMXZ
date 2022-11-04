@@ -21,13 +21,13 @@ for i in range(1, n):
     data_df = pd.concat(reads_df, axis = 0)
 
 # importing info
-with open("data/raw_data/data.info", 'r') as f:
+with open("../data/raw_data/data.info", 'r') as f:
     info = f.read().splitlines()
 
 # importing encoding pipeline and columns for mapping
-filename = 'data/raw_data/encoding_pipeline.pkl'
+filename = '../data/raw_data/encoding_pipeline.pkl'
 pipe = pickle.load(open(filename, 'rb'))
-filename = 'data/raw_data/columns.pkl'
+filename = '../data/raw_data/columns.pkl'
 columns = pickle.load(open(filename, 'rb'))
 
 # info
@@ -43,9 +43,11 @@ df_pre.model_features_and_clean()
 df = df_pre.feature_eng()
 
 # encoding
+df_id = df[['transcript', 'position']]
 for i in range(7):
     df['position_' + str(i)] = df['nucleotides'].apply(lambda x: x[i])
 df_enc = pd.DataFrame({col: vals for vals, col in zip(pipe.transform(df).T, columns)})
+df_enc[['transcript', 'position']] = df_id
 
 # returning df
 df_enc.to_csv('processed_data.csv', index=False)
