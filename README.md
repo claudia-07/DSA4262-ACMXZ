@@ -1,9 +1,9 @@
 # DSA4262-ACMXZ-
 DSA4262 Genomics Project
+
+Our general project directory is as follows:
 ```
 ├── data
-    └── archive
-        └── ...
     └── merged_data
     └── preprocessed_data
         └── archive
@@ -13,6 +13,9 @@ DSA4262 Genomics Project
     └── raw_data
         └── ...
     └── README.md
+├── deployment
+    └── preprocessing.py
+    └── random_forest.py
 ├── modelling
     └── ...
 ├── preprocessing
@@ -26,5 +29,6 @@ DSA4262 Genomics Project
         └── parameters.py
         └── preprocessing.py
 └── info.parquet
+└── requirements.txt
 
 ```
