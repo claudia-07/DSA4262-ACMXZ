@@ -47,5 +47,6 @@ for i in range(7):
 df_enc = pd.DataFrame({col: vals for vals, col in zip(pipe.transform(df).T, columns)})
 
 # returning df
-with open('df.csv', 'w') as sys.stdout:
-    print(df)
+# with open('df.csv', 'w') as sys.stdout:
+#     df
+df_enc.to_csv('processed_data.csv', index=False)
