@@ -3,6 +3,7 @@ import pandas as pd
 import sys
 import pickle
 import pathlib
+import csv
 
 THIS_DIR = pathlib.Path(__file__).resolve()
 PROJ_DIR = THIS_DIR.parents[1]
@@ -47,5 +48,5 @@ for i in range(7):
 df_enc = pd.DataFrame({col: vals for vals, col in zip(pipe.transform(df).T, columns)})
 
 # returning df
-with open('df.csv', 'w') as sys.stdout:
-    print(df)
+df_enc.to_csv('df_out.csv', index=False)
+# print(df_enc.to_csv('df_out.csv', index=False))
