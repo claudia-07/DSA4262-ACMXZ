@@ -9,4 +9,7 @@ scikit-learn == 1.1.2
 shap == 0.39.0
 fastparquet
 pyarrow
+json
+joblib
+
 
