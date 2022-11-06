@@ -30,5 +30,5 @@ if __name__=='__main__':
     y_test_pred_proba = rf_model.predict_proba(dataset[rfe_features])[:,1]
     res0 = pd.DataFrame(y_test_pred_proba,columns=['score'])
 
-    res0.to_csv('y_pred_proba.csv')
+    res0.to_csv('y_pred_proba.csv', index= False)
 
