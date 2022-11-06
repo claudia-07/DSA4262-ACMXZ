@@ -2,6 +2,7 @@
 DSA4262 Genomics Project
 
 Our general project directory is as follows:
+
 ```
 ├── archive # our notebooks for testing of functions
 ├── data
@@ -22,6 +23,8 @@ Our general project directory is as follows:
 ├── modelling
     └── lightgbm.ipynb
     └── random_forest.ipynb
+├── prediction
+    └── test_predictions.ipynb # finalised notebook used for predictions
 ├── util # consists of util scripts used in other scripts and notebooks
     └── model
         └── modelling.py
