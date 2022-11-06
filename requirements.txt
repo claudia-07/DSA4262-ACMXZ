@@ -7,7 +7,7 @@ pandas==1.2.5
 pip==22.2.2
 scikit-learn==1.1.2
 shap==0.39.0
-fastparquet==0.83
+fastparquet
 pyarrow==10.0.0
 joblib==1.2.0
 lightgbm==3.2.1
