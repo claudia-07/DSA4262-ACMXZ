@@ -16,7 +16,7 @@ from util.preprocess import (Preprocessing)
 n = len(sys.argv)
 data_df = pd.DataFrame()
 for i in range(1, n):
-    data = [json.loads(line) for line in open(sys.argv[i], 'r')]
+    data = [json.loads(line) for line in open(sys.argv[i], 'r')][0]
     reads_df = [parse_line(data[j]) for j in range(len(data))]
     data_df = pd.concat(reads_df, axis = 0)
 
@@ -25,9 +25,9 @@ with open("../data/model_training/raw_data/data.info", 'r') as f:
     info = f.read().splitlines()
 
 # importing encoding pipeline and columns for mapping
-filename = '../data/raw_data/encoding_pipeline.pkl'
+filename = '../data/model_training/raw_data/encoding_pipeline.pkl'
 pipe = pickle.load(open(filename, 'rb'))
-filename = '../data/raw_data/columns.pkl'
+filename = '../data/model_training/raw_data/columns.pkl'
 columns = pickle.load(open(filename, 'rb'))
 
 # info
