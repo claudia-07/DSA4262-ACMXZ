@@ -21,7 +21,7 @@ for i in range(1, n):
     data_df = pd.concat(reads_df, axis = 0)
 
 # importing info
-with open("../data/raw_data/data.info", 'r') as f:
+with open("../data/model_training/raw_data/data.info", 'r') as f:
     info = f.read().splitlines()
 
 # importing encoding pipeline and columns for mapping
