@@ -16,7 +16,9 @@ from util.preprocess import (Preprocessing)
 n = len(sys.argv)
 data_df = pd.DataFrame()
 for i in range(1, n):
-    data = [json.loads(line) for line in open(sys.argv[i], 'r')][0]
+    data = [json.loads(line) for line in open(sys.argv[i], 'r')]
+    if len(data)==1:
+        data = data[0]
     reads_df = [parse_line(data[j]) for j in range(len(data))]
     data_df = pd.concat(reads_df, axis = 0)
 
