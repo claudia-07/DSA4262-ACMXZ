@@ -57,5 +57,4 @@ if __name__=='__main__':
 
     predictions_df = prediction(path_to_test, pickled_model)
 
-    predictions_df.to_csv('y_pred_proba.csv')
-
+    predictions_df.to_csv('y_pred_proba.csv', index = False)
