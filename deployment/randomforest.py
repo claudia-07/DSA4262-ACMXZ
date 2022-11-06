@@ -1,3 +1,10 @@
+"""
+Random Forest script for predictions
+To use:
+cd deployment
+python randomforest.py -i A549_rep5_run1.csv
+
+"""
 import joblib
 import argparse
 import pandas as pd
@@ -7,9 +14,30 @@ def parse_args():
         :return: argument object
     """
     parser = argparse.ArgumentParser(description='randomforest.py')
-    parser.add_argument('-i', type=str, help='input test file', default='df_pred.csv') # to change the default 
+    parser.add_argument('-i', type=str, help='input test csv file', default='A549_rep5_run1.csv') # to change the default 
     args = parser.parse_args()
     return args
+
+def prediction(csv_fpath, pickled_model):
+    ## read csv file
+    data = pd.read_csv(csv_fpath)
+    print(data.shape)
+
+    ## save transcript and position col for concatenation later
+    data_id_col = data[["transcript", "position"]]
+
+    ## predict using rfc
+    data_pred = pickled_model.predict_proba(data[rfe_features])[:,1]
+    print(len(data_pred))
+
+    ## convert predictions to dataframe
+    data_pred_df = pd.DataFrame(data_pred, columns = ['score'])
+
+    ## 
+    data_pred_df = pd.concat([data_id_col, data_pred_df], axis = 1)
+    print(f"Prediction file is of shape: {data_pred_df.shape}")
+
+    return data_pred_df
 
 if __name__=='__main__':
 
@@ -25,10 +53,9 @@ if __name__=='__main__':
     path_to_test = args.i # test file is a csv
     dataset = pd.read_csv(path_to_test)
 
-    rf_model = joblib.load('rf.pkl')
+    pickled_model = joblib.load('rf.pkl')
 
-    y_test_pred_proba = rf_model.predict_proba(dataset[rfe_features])[:,1]
-    res0 = pd.DataFrame(y_test_pred_proba,columns=['score'])
+    predictions_df = prediction(path_to_test, pickled_model)
 
-    res0.to_csv('y_pred_proba.csv', index= False)
+    predictions_df.to_csv('y_pred_proba.csv')
 
